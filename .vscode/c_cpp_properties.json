@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "name": "ESP8266",
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "macos-clang-arm64",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${env:HOME}/Library/Arduino15/packages/esp8266/hardware/esp8266/3.1.2/cores/esp8266",
+        "${env:HOME}/Library/Arduino15/packages/esp8266/hardware/esp8266/3.1.2/variants/nodemcu"
+      ],
+      "defines": [
+        "ARDUINO=10819",
+        "ARDUINO_ESP8266_NODEMCU",
+        "ARDUINO_ARCH_ESP8266",
+        "ESP8266"
+      ]
+    }
+  ],
+  "version": 4
+}

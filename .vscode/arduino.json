@@ -1,0 +1,6 @@
+{
+  "sketch": "uno/uno.ino",
+  "board": "esp8266:esp8266:nodemcuv2",
+  "port": "/dev/tty.usbserial-0001",
+  "output": "build"
+}
