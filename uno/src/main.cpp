@@ -13,8 +13,8 @@ const char* MQTT_HOST = "test.mosquitto.org";
 const uint16_t MQTT_PORT = 1883;
 const char* TOPIC_SOIL = "khang/esp32/soil"; // publishes raw + percent
 
-// XIAO ESP32C3 A1 is GPIO1
-const int SENSOR_PIN = 1;
+// XIAO ESP32C3 use GPIO3 for sensor input
+const int SENSOR_PIN = 3;
 
 WiFiClient wifiClient;
 PubSubClient mqtt(wifiClient);
