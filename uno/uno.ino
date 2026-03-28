@@ -1,7 +1,7 @@
-// ESP8266 NodeMCU: Control LED on D4 (GPIO2) via MQTT
+// ESP32 (XIAO ESP32C3): Control LED via MQTT
 
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <PubSubClient.h>
 
 // Fill these in later
@@ -13,11 +13,11 @@ const char* MQTT_HOST = "test.mosquitto.org";
 const uint16_t MQTT_PORT = 1883;
 
 // Topics (change prefix if you want)
-const char* TOPIC_SET = "khang/esp8266/led/set";    // payload: on/off/toggle
-const char* TOPIC_STATE = "khang/esp8266/led/state"; // publishes on/off
+const char* TOPIC_SET = "khang/esp32/led/set";     // payload: on/off/toggle
+const char* TOPIC_STATE = "khang/esp32/led/state"; // publishes on/off
 
-// NodeMCU D4 = GPIO2, onboard LED is also active LOW
-const int LED_PIN = D4;
+// XIAO ESP32C3 onboard LED is typically active LOW on GPIO2 (change if needed)
+const int LED_PIN = 2;
 bool ledOn = false;
 
 WiFiClient wifiClient;
@@ -46,7 +46,8 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
 
 void connectMqtt() {
   while (!mqtt.connected()) {
-    String clientId = "esp8266-" + String(ESP.getChipId(), HEX);
+    uint64_t chipId = ESP.getEfuseMac();
+    String clientId = "esp32-" + String((uint32_t)(chipId >> 32), HEX) + String((uint32_t)chipId, HEX);
     if (mqtt.connect(clientId.c_str())) {
       mqtt.subscribe(TOPIC_SET);
       publishState();

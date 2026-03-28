@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ESP8266 LED MQTT Control</title>
+  <title>ESP32 Soil MQTT Monitor</title>
   <style>
     :root {
       --bg: #0b0f1a;
@@ -74,16 +74,15 @@
 </head>
 <body>
   <div class="card">
-    <h1>ESP8266 LED Control</h1>
-    <p>MQTT over WebSockets to public broker.</p>
+    <h1>ESP32 Soil Sensor</h1>
+    <p>MQTT over WebSockets (subscribe only).</p>
 
     <div class="row">
       <input id="host" value="test.mosquitto.org" placeholder="MQTT Host" />
       <input id="port" value="8081" placeholder="WSS Port" />
     </div>
     <div class="row" style="margin-top:10px;">
-      <input id="topicSet" value="khang/esp8266/led/set" placeholder="Topic set" />
-      <input id="topicState" value="khang/esp8266/led/state" placeholder="Topic state" />
+      <input id="topicSoil" value="khang/esp32/soil" placeholder="Topic soil" />
     </div>
     <div class="row" style="margin-top:10px;">
       <button id="connect" class="primary">Connect</button>
@@ -91,13 +90,8 @@
       <span class="badge" id="connState">disconnected</span>
     </div>
 
-    <div class="row" style="margin-top:14px;">
-      <button id="btnOn" class="primary">ON</button>
-      <button id="btnOff" class="danger">OFF</button>
-      <button id="btnToggle">TOGGLE</button>
-    </div>
-
-    <div class="status" id="status">LED state: unknown</div>
+    <div class="status" id="status">Soil: raw=-- pct=--</div>
+    <div class="status" id="updated" style="margin-top:8px;">Last update: -</div>
     <div class="status" id="log" style="margin-top:8px;">Log: -</div>
   </div>
 
@@ -126,12 +120,20 @@
       client.on("connect", () => {
         setConnState("connected");
         log("connected to " + url);
-        client.subscribe(el("topicState").value.trim());
+        client.subscribe(el("topicSoil").value.trim());
       });
 
       client.on("message", (topic, message) => {
         const text = message.toString();
-        el("status").textContent = `LED state: ${text}`;
+        try {
+          const data = JSON.parse(text);
+          const raw = typeof data.raw === "number" ? data.raw : "--";
+          const pct = typeof data.pct === "number" ? data.pct : "--";
+          el("status").textContent = `Soil: raw=${raw} pct=${pct}`;
+        } catch (e) {
+          el("status").textContent = `Soil: ${text}`;
+        }
+        el("updated").textContent = "Last update: " + new Date().toLocaleTimeString();
       });
 
       client.on("error", (err) => {
@@ -153,18 +155,8 @@
       log("disconnected");
     }
 
-    function publish(msg) {
-      if (!client) return log("not connected");
-      const topic = el("topicSet").value.trim();
-      client.publish(topic, msg);
-      log("publish: " + msg);
-    }
-
     el("connect").onclick = connect;
     el("disconnect").onclick = disconnect;
-    el("btnOn").onclick = () => publish("on");
-    el("btnOff").onclick = () => publish("off");
-    el("btnToggle").onclick = () => publish("toggle");
   </script>
 </body>
 </html>
