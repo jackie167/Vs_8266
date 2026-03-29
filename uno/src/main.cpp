@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 
@@ -12,7 +13,7 @@
 #include "comms_wifi.h"
 #include "comms_mqtt.h"
 
-WiFiClient wifiClient;
+WiFiClientSecure wifiClient;
 PubSubClient mqtt(wifiClient);
 
 static const char* DEVICE_ID = "esp32_01";
@@ -47,8 +48,10 @@ void setup() {
   soilSensorBegin();
   connectWiFi();
 
+  // TLS (insecure mode for quick testing)
+  wifiClient.setInsecure();
   mqttConfigure(mqtt, MQTT_HOST, MQTT_PORT, onMqttMessage);
-  mqttEnsureConnected(mqtt, DEVICE_ID, TOPIC_PUMP_CMD);
+  mqttEnsureConnected(mqtt, DEVICE_ID, MQTT_USERNAME, MQTT_PASSWORD, TOPIC_PUMP_CMD);
 
   // gửi config_test 1 lần lúc start
   JsonDocument configDoc;
@@ -62,7 +65,7 @@ void setup() {
 
 void loop() {
   if (mqtt.connected() == false) {
-    mqttEnsureConnected(mqtt, DEVICE_ID, TOPIC_PUMP_CMD);
+    mqttEnsureConnected(mqtt, DEVICE_ID, MQTT_USERNAME, MQTT_PASSWORD, TOPIC_PUMP_CMD);
   }
   mqtt.loop();
 
