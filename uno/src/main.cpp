@@ -10,6 +10,7 @@
 #include "types.h"
 #include "soil_sensor.h"
 #include "comms_wifi.h"
+#include "comms_mqtt.h"
 
 WiFiClient wifiClient;
 PubSubClient mqtt(wifiClient);
@@ -17,7 +18,7 @@ PubSubClient mqtt(wifiClient);
 static const char* DEVICE_ID = "esp32_01";
 
 // Topic chuẩn hệ ROS2 hiện tại
-static const char* TOPIC_CONFIG_TEST = "smart_irrigation/data/config_test";
+// Topics are defined in config.h
 
 void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   String msg;
@@ -28,8 +29,10 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length) {
   if (String(topic) == TOPIC_PUMP_CMD) {
     if (msg == "ON") {
       digitalWrite(PUMP_RELAY_PIN, LOW);   // đổi LOW/HIGH theo relay của bạn
+      mqtt.publish(TOPIC_PUMP_STATE, "ON", false);
     } else if (msg == "OFF") {
       digitalWrite(PUMP_RELAY_PIN, HIGH);
+      mqtt.publish(TOPIC_PUMP_STATE, "OFF", false);
     }
   }
 }
@@ -44,12 +47,8 @@ void setup() {
   soilSensorBegin();
   connectWiFi();
 
-  mqtt.setServer(MQTT_HOST, MQTT_PORT);
-  mqtt.setCallback(onMqttMessage);
-  mqtt.setKeepAlive(60);
-  mqtt.setSocketTimeout(10);
-  connectMqtt(mqtt);
-  mqtt.subscribe(TOPIC_PUMP_CMD);
+  mqttConfigure(mqtt, MQTT_HOST, MQTT_PORT, onMqttMessage);
+  mqttEnsureConnected(mqtt, DEVICE_ID, TOPIC_PUMP_CMD);
 
   // gửi config_test 1 lần lúc start
   JsonDocument configDoc;
@@ -62,11 +61,8 @@ void setup() {
 }
 
 void loop() {
-  if (!mqtt.connected()) {
-    mqtt.setKeepAlive(60);
-    mqtt.setSocketTimeout(10);
-    connectMqtt(mqtt);
-    mqtt.subscribe(TOPIC_PUMP_CMD);
+  if (mqtt.connected() == false) {
+    mqttEnsureConnected(mqtt, DEVICE_ID, TOPIC_PUMP_CMD);
   }
   mqtt.loop();
 
@@ -86,7 +82,7 @@ void loop() {
 
     char payload[192];
     serializeJson(doc, payload, sizeof(payload));
-    mqtt.publish(TOPIC_SOIL, payload, false);
+    mqtt.publish(TOPIC_SENSOR, payload, false);
 
     Serial.print("RAW=");
     Serial.print(r.raw);
